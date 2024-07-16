@@ -1,7 +1,7 @@
 [package]
-name = "lukadev-0/typed-promise"
+name = "howmanysmall/typed-promise"
 description = "Promises with types"
-version = "4.0.2"
+version = "4.0.3"
 license = "MIT"
 registry = "https://github.com/UpliftGames/wally-index"
 realm = "shared"

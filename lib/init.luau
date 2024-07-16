@@ -4,6 +4,43 @@
 local Promise = require(script.Parent.Promise) :: any
 
 export type Status = "Started" | "Resolved" | "Rejected" | "Cancelled"
+export type ErrorKind = "ExecutionError" | "AlreadyCancelled" | "NotResolvedInTime" | "TimedOut"
+
+type ErrorStaticAndShared = {
+	Kind: {
+		ExecutionError: "ExecutionError",
+		AlreadyCancelled: "AlreadyCancelled",
+		NotResolvedInTime: "NotResolvedInTime",
+		TimedOut: "TimedOut",
+	},
+}
+type ErrorOptions = {
+	error: string,
+	trace: string?,
+	context: string?,
+	kind: ErrorKind,
+}
+
+export type Error = typeof(setmetatable(
+	{} :: ErrorStaticAndShared & {
+		error: string,
+		trace: string?,
+		context: string?,
+		kind: ErrorKind,
+		parent: Error?,
+		createdTick: number,
+		createdTrace: string,
+
+		extend: (self: Error, options: ErrorOptions?) -> Error,
+		getErrorChain: (self: Error) -> {Error},
+	},
+	{} :: {__tostring: (self: Error) -> string}
+))
+type ErrorStatic = ErrorStaticAndShared & {
+	new: (options: ErrorOptions?, parent: Error?) -> Error,
+	is: (anything: any) -> boolean,
+	isKind: (anything: any, kind: ErrorKind) -> boolean,
+}
 
 export type Promise = {
 	andThen: (
@@ -50,7 +87,7 @@ export type TypedPromise<T...> = {
 	getStatus: (self: Promise) -> Status,
 	now: (self: Promise, rejectionValue: any?) -> Promise,
 	tap: (self: Promise, tapHandler: (T...) -> ...any) -> Promise,
-	timeout: (self: Promise, seconds: number, rejectionValue: any?) -> Promise,
+	timeout: (self: Promise, seconds: number, rejectionValue: any?) -> TypedPromise<T...>,
 }
 
 type Signal<T...> = {
@@ -63,11 +100,17 @@ type SignalConnection = {
 }
 
 return Promise :: {
-	Error: any,
+	Error: ErrorStatic,
+	Status: {
+		Started: "Started",
+		Resolved: "Resolved",
+		Rejected: "Rejected",
+		Cancelled: "Cancelled",
+	},
 
-	all: <T>(promises: { TypedPromise<T> }) -> TypedPromise<{ T }>,
-	allSettled: <T>(promise: { TypedPromise<T> }) -> TypedPromise<{ Status }>,
-	any: <T>(promise: { TypedPromise<T> }) -> TypedPromise<T>,
+	all: <T>(promises: {TypedPromise<T>}) -> TypedPromise<{T}>,
+	allSettled: <T>(promise: {TypedPromise<T>}) -> TypedPromise<{Status}>,
+	any: <T>(promise: {TypedPromise<T>}) -> TypedPromise<T>,
 	defer: <TReturn...>(
 		executor: (
 			resolve: (TReturn...) -> (),
@@ -77,11 +120,11 @@ return Promise :: {
 	) -> TypedPromise<TReturn...>,
 	delay: (seconds: number) -> TypedPromise<number>,
 	each: <T, TReturn>(
-		list: { T | TypedPromise<T> },
+		list: {T | TypedPromise<T>},
 		predicate: (value: T, index: number) -> TReturn | TypedPromise<TReturn>
-	) -> TypedPromise<{ TReturn }>,
+	) -> TypedPromise<{TReturn}>,
 	fold: <T, TReturn>(
-		list: { T | TypedPromise<T> },
+		list: {T | TypedPromise<T>},
 		reducer: (accumulator: TReturn, value: T, index: number) -> TReturn | TypedPromise<TReturn>
 	) -> TypedPromise<TReturn>,
 	fromEvent: <TReturn...>(
@@ -98,7 +141,7 @@ return Promise :: {
 	) -> TypedPromise<TReturn...>,
 	onUnhandledRejection: (callback: (promise: TypedPromise<any>, ...any) -> ()) -> () -> (),
 	promisify: <TArgs..., TReturn...>(callback: (TArgs...) -> TReturn...) -> (TArgs...) -> TypedPromise<TReturn...>,
-	race: <T>(promises: { TypedPromise<T> }) -> TypedPromise<T>,
+	race: <T>(promises: {TypedPromise<T>}) -> TypedPromise<T>,
 	reject: (...any) -> TypedPromise<...any>,
 	resolve: <TReturn...>(TReturn...) -> TypedPromise<TReturn...>,
 	retry: <TArgs..., TReturn...>(
@@ -112,6 +155,6 @@ return Promise :: {
 		seconds: number,
 		TArgs...
 	) -> TypedPromise<TReturn...>,
-	some: <T>(promise: { TypedPromise<T> }, count: number) -> TypedPromise<{ T }>,
+	some: <T>(promise: {TypedPromise<T>}, count: number) -> TypedPromise<{T}>,
 	try: <TArgs..., TReturn...>(callback: (TArgs...) -> TReturn..., TArgs...) -> TypedPromise<TReturn...>,
 }
