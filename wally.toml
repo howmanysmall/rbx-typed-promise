@@ -1,10 +1,12 @@
 [package]
-name = "howmanysmall/typed-promise"
 description = "Promises with types"
-version = "4.0.3"
+exclude = ["**"]
+include = ["src", "src/**", "wally.toml", "wally.lock", "default.project.json", "LICENSE", "README.md"]
 license = "MIT"
-registry = "https://github.com/UpliftGames/wally-index"
+name = "howmanysmall/typed-promise"
 realm = "shared"
+registry = "https://github.com/UpliftGames/wally-index"
+version = "4.0.4"
 
 [dependencies]
 Promise = "evaera/promise@4.0.0"
