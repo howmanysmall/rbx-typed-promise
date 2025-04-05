@@ -3,7 +3,7 @@
   "tree": {
     "$path": "Packages",
     "typed-promise": {
-      "$path": "lib"
+      "$path": "src"
     }
   }
 }
